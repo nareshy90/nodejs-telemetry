@@ -6,29 +6,29 @@ const port = 3000;
 // Import prom-client
 const prometheus = require('prom-client');
 
-// Enable the collection of default metrics
+// Explicitly initialize default metrics
 prometheus.collectDefaultMetrics();
 
 app.get('/', (req, res) => {
   // Ensure that the default metrics are initialized
-  if (prometheus.register.contentType !== undefined) {
-    // Increase a counter each time the / endpoint is hit
-    prometheus.defaultMetrics.httpRequestsTotal.inc();
-
-    // Simulate processing time with a delay
-    const start = Date.now();
-    setTimeout(() => {
-      const end = Date.now();
-
-      // Record the duration of the request
-      prometheus.defaultMetrics.httpRequestDurationMicroseconds.observe({ path: '/' }, end - start);
-
-      res.send('Hello, this is your sample Node.js app!');
-    }, 100);
-  } else {
-    // If metrics are not initialized, respond with an error message
-    res.status(500).send('Metrics are not initialized.');
+  if (!prometheus.register.getSingleMetric('httpRequestsTotal')) {
+    // Explicitly initialize default metrics if not already initialized
+    prometheus.collectDefaultMetrics();
   }
+
+  // Increase a counter each time the / endpoint is hit
+  prometheus.defaultMetrics.httpRequestsTotal.inc();
+
+  // Simulate processing time with a delay
+  const start = Date.now();
+  setTimeout(() => {
+    const end = Date.now();
+
+    // Record the duration of the request
+    prometheus.defaultMetrics.httpRequestDurationMicroseconds.observe({ path: '/' }, end - start);
+
+    res.send('Hello, this is your sample Node.js app!');
+  }, 100);
 });
 
 // Expose metrics endpoint for Prometheus to scrape
