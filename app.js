@@ -10,19 +10,25 @@ const prometheus = require('prom-client');
 prometheus.collectDefaultMetrics();
 
 app.get('/', (req, res) => {
-  // Increase a counter each time the / endpoint is hit
-  prometheus.defaultMetrics.httpRequestsTotal.inc();
+  // Ensure that the default metrics are initialized
+  if (prometheus.register.contentType !== undefined) {
+    // Increase a counter each time the / endpoint is hit
+    prometheus.defaultMetrics.httpRequestsTotal.inc();
 
-  // Simulate processing time with a delay
-  const start = Date.now();
-  setTimeout(() => {
-    const end = Date.now();
+    // Simulate processing time with a delay
+    const start = Date.now();
+    setTimeout(() => {
+      const end = Date.now();
 
-    // Record the duration of the request
-    prometheus.defaultMetrics.httpRequestDurationMicroseconds.observe({ path: '/' }, end - start);
+      // Record the duration of the request
+      prometheus.defaultMetrics.httpRequestDurationMicroseconds.observe({ path: '/' }, end - start);
 
-    res.send('Hello, this is your sample Node.js app!');
-  }, 100);
+      res.send('Hello, this is your sample Node.js app!');
+    }, 100);
+  } else {
+    // If metrics are not initialized, respond with an error message
+    res.status(500).send('Metrics are not initialized.');
+  }
 });
 
 // Expose metrics endpoint for Prometheus to scrape
